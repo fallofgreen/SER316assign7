@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import main.java.memoranda.date.CalendarDate;
+import main.java.memoranda.interfaces.IEvent;
 import main.java.memoranda.util.CurrentStorage;
 import main.java.memoranda.util.Util;
 
@@ -112,7 +113,7 @@ public class EventsManager {
 		return v;
 	}
 
-	public static Event createEvent(
+	public static IEvent createEvent(
 		CalendarDate date,
 		int hh,
 		int mm,
@@ -129,7 +130,7 @@ public class EventsManager {
 		return new EventImpl(el);
 	}
 
-	public static Event createRepeatableEvent(
+	public static IEvent createRepeatableEvent(
 		int type,
 		CalendarDate startDate,
 		CalendarDate endDate,
@@ -174,7 +175,7 @@ public class EventsManager {
 		Vector reps = (Vector) getRepeatableEvents();
 		Vector v = new Vector();
 		for (int i = 0; i < reps.size(); i++) {
-			Event ev = (Event) reps.get(i);
+			IEvent ev = (IEvent) reps.get(i);
 			
 			// --- ivanrise
 			// ignore this event if it's a 'only working days' event and today is weekend.
@@ -224,7 +225,7 @@ public class EventsManager {
 		return getEventsForDate(CalendarDate.today());
 	}
 
-	public static Event getEvent(CalendarDate date, int hh, int mm) {
+	public static IEvent getEvent(CalendarDate date, int hh, int mm) {
 		Day d = getDay(date);
 		if (d == null)
 			return null;
@@ -246,22 +247,38 @@ public class EventsManager {
 			d.getElement().removeChild(getEvent(date, hh, mm).getContent());
 	}
 
-	public static void removeEvent(Event ev) {
+	public static void removeEvent(IEvent ev) {
 		ParentNode parent = ev.getContent().getParent();
 		parent.removeChild(ev.getContent());
 	}
-
+	
+	//SER316 reduced CC of year by adding method checkYear() and checkMont()
 	private static Day createDay(CalendarDate date) {
 		Year y = getYear(date.getYear());
-		if (y == null)
-			y = createYear(date.getYear());
+		
+		y = checkYear(y, date);
+		
 		Month m = y.getMonth(date.getMonth());
-		if (m == null)
-			m = y.createMonth(date.getMonth());
+		m = checkMonth(m, y, date);
+		
 		Day d = m.getDay(date.getDay());
 		if (d == null)
 			d = m.createDay(date.getDay());
 		return d;
+	}
+	
+	private static Year checkYear(Year y, CalendarDate date) {
+	    if (y == null) {
+            y = createYear(date.getYear());
+	    }    
+	    return y;
+	}
+	
+	private static Month checkMonth(Month m, Year y, CalendarDate date) {
+	    if (m == null) {
+            m = y.createMonth(date.getMonth());
+	    }
+	    return m;
 	}
 
 	private static Year createYear(int y) {
@@ -413,54 +430,6 @@ public class EventsManager {
 			return dEl;
 		}
 	}
-/*
-	static class EventsVectorSorter {
-
-		private static Vector keys = null;
-
-		private static int toMinutes(Object obj) {
-			Event ev = (Event) obj;
-			return ev.getHour() * 60 + ev.getMinute();
-		}
-
-		private static void doSort(int L, int R) { // Hoar's QuickSort
-			int i = L;
-			int j = R;
-			int x = toMinutes(keys.get((L + R) / 2));
-			Object w = null;
-			do {
-				while (toMinutes(keys.get(i)) < x) {
-					i++;
-				}
-				while (x < toMinutes(keys.get(j))) {
-					j--;
-				}
-				if (i <= j) {
-					w = keys.get(i);
-					keys.set(i, keys.get(j));
-					keys.set(j, w);
-					i++;
-					j--;
-				}
-			}
-			while (i <= j);
-			if (L < j) {
-				doSort(L, j);
-			}
-			if (i < R) {
-				doSort(i, R);
-			}
-		}
-
-		public static void sort(Vector theKeys) {
-			if (theKeys == null)
-				return;
-			if (theKeys.size() <= 0)
-				return;
-			keys = theKeys;
-			doSort(0, keys.size() - 1);
-		}
-
-	}
-*/
+//TASK 2-1 SMELL WITHIN A CLASS
+	//Duplicate code removed
 }
